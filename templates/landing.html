@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoiceAI - Private Voice Support for Your Company</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white font-sans"
+  >
+    <!-- Navigation -->
+    <nav
+      class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur border-b border-slate-800"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <div class="text-2xl font-bold text-blue-500">VoiceAI Support</div>
+        <div class="flex space-x-4">
+          <a
+            href="{% url 'login' %}"
+            class="px-6 py-2 text-slate-300 hover:text-white transition"
+            >Login</a
+          >
+          <a
+            href="{% url 'signup' %}"
+            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition"
+            >Get Started</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="min-h-screen flex items-center justify-center px-6 py-20">
+      <div class="max-w-4xl mx-auto text-center space-y-8">
+        <div
+          class="inline-block bg-blue-600/20 border border-blue-600/50 rounded-full px-4 py-2 text-blue-400 text-sm font-semibold"
+        >
+          🚀 AI-Powered Customer Support
+        </div>
+
+        <h1 class="text-6xl lg:text-7xl font-extrabold leading-tight">
+          Private Voice AI for Your
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600"
+            >Customers</span
+          >
+        </h1>
+
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Feed your company data. Deploy voice-enabled customer support in
+          minutes. Keep all data private and secure. No third-party access.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+          <a
+            href="{% url 'signup' %}"
+            class="px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-full text-lg font-bold shadow-lg shadow-blue-500/30 transition transform hover:scale-105"
+          >
+            Build Your Bot Now →
+          </a>
+          <a
+            href="#features"
+            class="px-10 py-4 border-2 border-blue-600 text-blue-400 hover:bg-blue-600/10 rounded-full text-lg font-bold transition"
+          >
+            Learn More
+          </a>
+        </div>
+
+        <div class="pt-12">
+          <p class="text-slate-500 text-sm mb-6">
+            Trusted by leading companies
+          </p>
+          <div class="flex justify-center items-center gap-8 opacity-60">
+            <div class="text-3xl font-bold">🏢</div>
+            <div class="text-3xl font-bold">🏥</div>
+            <div class="text-3xl font-bold">🏦</div>
+            <div class="text-3xl font-bold">📱</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-6 bg-slate-800/50">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-16">
+          Why Choose VoiceAI?
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">🎤</div>
+            <h3 class="text-xl font-bold mb-3">Voice-Enabled Support</h3>
+            <p class="text-slate-400">
+              Let customers talk naturally to your support bot. Automatic
+              speech-to-text transcription powered by latest AI.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">📄</div>
+            <h3 class="text-xl font-bold mb-3">Easy Content Management</h3>
+            <p class="text-slate-400">
+              Upload PDFs, paste text, or document your knowledge base. AI
+              learns from your company data automatically.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">🔒</div>
+            <h3 class="text-xl font-bold mb-3">100% Private & Secure</h3>
+            <p class="text-slate-400">
+              Your data stays yours. No vendor lock-in. Complete control over
+              bot customization.
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">⚙️</div>
+            <h3 class="text-xl font-bold mb-3">Full Customization</h3>
+            <p class="text-slate-400">
+              Customize bot name, welcome message, and system behavior. Match
+              your brand perfectly.
+            </p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">📊</div>
+            <h3 class="text-xl font-bold mb-3">Analytics Dashboard</h3>
+            <p class="text-slate-400">
+              Track conversations, monitor bot performance, and improve
+              continuously with insights.
+            </p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl p-8 hover:border-blue-600/50 transition"
+          >
+            <div class="text-4xl mb-4">🔗</div>
+            <h3 class="text-xl font-bold mb-3">Easy to Share</h3>
+            <p class="text-slate-400">
+              Get a unique public URL for your bot. Embed on websites or share
+              directly with customers.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-20 px-6">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-16">How It Works</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div
+              class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-6"
+            >
+              1
+            </div>
+            <h3 class="font-bold mb-2">Sign Up</h3>
+            <p class="text-slate-400">Create your company account in seconds</p>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-6"
+            >
+              2
+            </div>
+            <h3 class="font-bold mb-2">Add Knowledge</h3>
+            <p class="text-slate-400">
+              Upload PDFs and documents about your company
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-6"
+            >
+              3
+            </div>
+            <h3 class="font-bold mb-2">Customize Bot</h3>
+            <p class="text-slate-400">
+              Set name, welcome message, and behavior
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-6"
+            >
+              4
+            </div>
+            <h3 class="font-bold mb-2">Share & Deploy</h3>
+            <p class="text-slate-400">
+              Get your unique link and start helping customers
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="py-20 px-6 bg-slate-800/50">
+      <div class="max-w-6xl mx-auto text-center">
+        <h2 class="text-4xl font-bold mb-4">Simple Pricing</h2>
+        <p class="text-slate-400 text-xl mb-16">
+          No hidden fees. No complex plans. Just AI support.
+        </p>
+
+        <div
+          class="bg-slate-900 border border-blue-600 rounded-2xl p-12 max-w-md mx-auto"
+        >
+          <h3 class="text-3xl font-bold mb-4">Free Plan</h3>
+          <div class="text-5xl font-bold text-blue-400 mb-8">
+            $0<span class="text-lg text-slate-400">/month</span>
+          </div>
+
+          <ul class="space-y-4 text-left mb-8">
+            <li class="flex items-center space-x-3">
+              <span class="text-green-400">✓</span>
+              <span>Unlimited knowledge items</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <span class="text-green-400">✓</span>
+              <span>Voice & text chat</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <span class="text-green-400">✓</span>
+              <span>PDF uploads</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <span class="text-green-400">✓</span>
+              <span>Bot customization</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <span class="text-green-400">✓</span>
+              <span>Analytics dashboard</span>
+            </li>
+          </ul>
+
+          <a
+            href="{% url 'signup' %}"
+            class="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
+          >
+            Start Free Today
+          </a>
+
+          <p class="text-sm text-slate-500 mt-6">
+            No credit card required. No time limits.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-6">
+      <div
+        class="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600/20 to-slate-800 border border-blue-600/50 rounded-2xl p-12"
+      >
+        <h2 class="text-4xl font-bold mb-6">
+          Ready to Empower Your Customers?
+        </h2>
+        <p class="text-xl text-slate-400 mb-8">
+          Deploy your AI support bot in minutes. No technical knowledge
+          required.
+        </p>
+        <a
+          href="{% url 'signup' %}"
+          class="inline-block px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition transform hover:scale-105"
+        >
+          Create Your Bot Free
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-12 px-6 mt-20">
+      <div class="max-w-6xl mx-auto text-center text-slate-500 text-sm">
+        <p>
+          &copy; 2026 VoiceAI. All rights reserved. Privacy-first customer
+          support.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
