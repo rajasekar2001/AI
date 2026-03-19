@@ -6,10 +6,10 @@ from django.conf import settings
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def get_embedding(text: str):
-    if not text:
+    # if not text:
         return []
-    embedding = embedding_model.encode(text)
-    return embedding.tolist()
+    # embedding = embedding_model.encode(text)
+    # return embedding.tolist()
 
 def transcribe_audio(audio_file):
     if not settings.GROQ_API_KEY:
