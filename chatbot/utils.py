@@ -3,7 +3,7 @@ from groq import Groq
 from django.conf import settings
 # from sentence_transformers import SentenceTransformer
 
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embedding_model = None
 
 def get_embedding(text: str):
     # if not text:
