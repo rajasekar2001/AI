@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Call - {{ bot_config.bot_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+        @keyframes sound-wave {
+            0% { height: 20px; }
+            50% { height: 60px; }
+            100% { height: 20px; }
+        }
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+        .sound-wave {
+            display: inline-block;
+            width: 6px;
+            margin: 0 3px;
+            background: #10b981;
+            animation: sound-wave 0.5s infinite ease-in-out;
+        }
+        .wave-1 { animation-delay: 0s; height: 40px; }
+        .wave-2 { animation-delay: 0.1s; height: 60px; }
+        .wave-3 { animation-delay: 0.2s; height: 80px; }
+        .wave-4 { animation-delay: 0.3s; height: 60px; }
+        .wave-5 { animation-delay: 0.4s; height: 40px; }
+        
+        .end-call-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .listening {
+            animation: listening-pulse 1s infinite;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        @keyframes listening-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+        }
+
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+            display: inline-block;
+            width: 24px;
+            text-align: left;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+    <div class="flex flex-col h-screen">
+        <!-- Header -->
+        <div class="bg-slate-800 border-b border-slate-700 p-6">
+            <div class="max-w-4xl mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-green-400">📞 Voice Call</h1>
+                    <p class="text-slate-400 text-sm">{{ bot_config.bot_name }} - {% if is_admin %}Admin Test{% else %}Customer Support{% endif %}</p>
+                </div>
+                <button onclick="endCall()" class="end-call-btn hover:bg-red-700 px-6 py-2 rounded-full font-semibold transition shadow-lg">
+                    End Call
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Call Area -->
+        <div class="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+            <div class="text-center max-w-2xl w-full">
+                <!-- Call Status -->
+                <div class="mb-8">
+                    <div class="inline-flex items-center space-x-2 bg-green-500/20 px-4 py-2 rounded-full">
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-animation"></div>
+                        <span class="text-green-400 font-semibold">Live Call in Progress</span>
+                    </div>
+                </div>
+
+                <!-- Avatar -->
+                <div class="mb-8">
+                    <div class="w-48 h-48 mx-auto bg-gradient-to-br from-green-600 to-teal-600 rounded-full flex items-center justify-center shadow-2xl pulse-animation">
+                        <span class="text-6xl">🎤</span>
+                    </div>
+                    <h2 class="text-xl font-semibold mt-4">{{ bot_config.bot_name }}</h2>
+                    <p class="text-slate-400 text-sm">AI Support Assistant</p>
+                </div>
+
+                <!-- Sound Waves (Visual feedback) -->
+                <div id="soundWaves" class="mb-8 hidden">
+                    <div class="flex justify-center items-end h-24">
+                        <div class="sound-wave wave-1"></div>
+                        <div class="sound-wave wave-2"></div>
+                        <div class="sound-wave wave-3"></div>
+                        <div class="sound-wave wave-4"></div>
+                        <div class="sound-wave wave-5"></div>
+                    </div>
+                    <p class="text-green-400 text-sm mt-2">🎙️ Listening... Speak now</p>
+                </div>
+
+                <!-- Transcripts -->
+                <div class="bg-slate-800 rounded-xl p-6 mb-4">
+                    <div class="text-slate-400 text-sm mb-2">You said:</div>
+                    <div id="userTranscript" class="text-white text-lg min-h-[60px]">
+                        Click the microphone to start speaking
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 rounded-xl p-6 mb-6">
+                    <div class="text-slate-400 text-sm mb-2">{{ bot_config.bot_name }} replied:</div>
+                    <div id="botResponse" class="text-green-300 text-lg min-h-[60px]">
+                        Hello! I'm {{ bot_config.bot_name }}. Click the microphone and ask me anything!
+                    </div>
+                </div>
+
+                <!-- Main Microphone Button -->
+                <div class="mb-6">
+                    <button id="micButton" onclick="toggleListening()" 
+                            class="w-32 h-32 bg-gradient-to-br from-green-600 to-teal-600 rounded-full flex items-center justify-center mx-auto shadow-2xl hover:scale-105 transition-all">
+                        <span id="micIcon" class="text-5xl">🎤</span>
+                    </button>
+                    <p id="micStatus" class="text-slate-400 text-sm mt-3">Click to start speaking</p>
+                </div>
+
+                <!-- Text Input Alternative -->
+                <div class="mt-4 pt-4 border-t border-slate-700">
+                    <p class="text-slate-400 text-sm mb-3">📝 Or type your question:</p>
+                    <div class="flex space-x-2">
+                        <input type="text" id="textQuestion" 
+                               placeholder="Type your question here..."
+                               class="flex-1 bg-slate-700 border border-slate-600 rounded-full px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-green-500">
+                        <button onclick="sendTextQuestion()" 
+                                class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-full transition font-semibold">
+                            Send
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-slate-500 text-xs mt-6">
+                    💡 Tip: Click the microphone, speak clearly, and the AI will respond with voice!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let recognition = null;
+        let isListening = false;
+        let callActive = true;
+        let isProcessing = false;
+        let currentAudio = null;
+        let listeningTimeout = null;
+        let recognitionAttempts = 0;
+        const MAX_RECOGNITION_ATTEMPTS = 3;
+        
+        const company = "{% if is_admin %}{{ request.user.username }}{% else %}{{ company_name }}{% endif %}";
+        const isAdmin = {% if is_admin %}true{% else %}false{% endif %};
+        const botName = "{{ bot_config.bot_name }}";
+
+        // Initialize Web Speech API
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
+                
+                recognition.onstart = function() {
+                    console.log('Recognition started');
+                    isListening = true;
+                    document.getElementById('micButton').classList.add('listening');
+                    document.getElementById('micIcon').innerHTML = '🎙️';
+                    document.getElementById('micStatus').textContent = 'Listening... Speak now';
+                    document.getElementById('soundWaves').classList.remove('hidden');
+                    document.getElementById('userTranscript').innerHTML = '<span class="text-yellow-400">🎙️ Listening... Speak your question</span>';
+                    
+                    listeningTimeout = setTimeout(() => {
+                        if (isListening) {
+                            console.log('Auto-stopping due to timeout');
+                            recognition.stop();
+                        }
+                    }, 10000);
+                };
+                
+                recognition.onend = function() {
+                    console.log('Recognition ended');
+                    if (listeningTimeout) {
+                        clearTimeout(listeningTimeout);
+                        listeningTimeout = null;
+                    }
+                    
+                    isListening = false;
+                    document.getElementById('micButton').classList.remove('listening');
+                    document.getElementById('micIcon').innerHTML = '🎤';
+                    document.getElementById('micStatus').textContent = 'Click to start speaking';
+                    document.getElementById('soundWaves').classList.add('hidden');
+                    
+                    recognitionAttempts = 0;
+                };
+                
+                recognition.onresult = function(event) {
+                    console.log('Recognition result received', event);
+                    if (listeningTimeout) {
+                        clearTimeout(listeningTimeout);
+                        listeningTimeout = null;
+                    }
+                    
+                    if (event.results && event.results[0] && event.results[0][0]) {
+                        const transcript = event.results[0][0].transcript;
+                        console.log('Speech recognized:', transcript);
+                        document.getElementById('userTranscript').innerHTML = `<span class="text-green-400">You:</span> ${transcript}`;
+                        document.getElementById('micStatus').textContent = 'Processing...';
+                        
+                        if (isListening) {
+                            recognition.stop();
+                        }
+                        
+                        sendToServer(transcript);
+                    } else {
+                        console.log('No transcript in result');
+                        document.getElementById('userTranscript').innerHTML = '<span class="text-red-400">No speech detected. Please try again.</span>';
+                        document.getElementById('micStatus').textContent = 'Click to try again';
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Recognition error:', event.error);
+                    if (listeningTimeout) {
+                        clearTimeout(listeningTimeout);
+                        listeningTimeout = null;
+                    }
+                    
+                    isListening = false;
+                    document.getElementById('micButton').classList.remove('listening');
+                    document.getElementById('soundWaves').classList.add('hidden');
+                    
+                    let errorMsg = '';
+                    switch(event.error) {
+                        case 'no-speech':
+                            errorMsg = 'No speech detected. Please click the microphone and speak clearly.';
+                            break;
+                        case 'audio-capture':
+                            errorMsg = 'No microphone found. Please check your microphone is connected.';
+                            break;
+                        case 'not-allowed':
+                            errorMsg = 'Microphone access denied. Please allow microphone access and refresh the page.';
+                            break;
+                        case 'network':
+                            errorMsg = 'Network error. Please check your connection.';
+                            break;
+                        case 'aborted':
+                            errorMsg = 'Listening was aborted. Please try again.';
+                            break;
+                        default:
+                            errorMsg = `Error: ${event.error}. Please try again.`;
+                    }
+                    
+                    document.getElementById('userTranscript').innerHTML = `<span class="text-red-400">${errorMsg}</span>`;
+                    document.getElementById('micIcon').innerHTML = '🎤';
+                    document.getElementById('micStatus').textContent = 'Click to try again';
+                    
+                    if (event.error === 'no-speech' && recognitionAttempts < MAX_RECOGNITION_ATTEMPTS) {
+                        recognitionAttempts++;
+                        console.log(`Retry attempt ${recognitionAttempts}`);
+                        setTimeout(() => {
+                            if (!isListening && !isProcessing) {
+                                toggleListening();
+                            }
+                        }, 1000);
+                    }
+                };
+                
+                return true;
+            } else {
+                const errorMsg = 'Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari and type your question.';
+                document.getElementById('micStatus').textContent = errorMsg;
+                document.getElementById('userTranscript').innerHTML = `<span class="text-red-400">${errorMsg}</span>`;
+                document.getElementById('micButton').style.opacity = '0.5';
+                document.getElementById('micButton').disabled = true;
+                return false;
+            }
+        }
+
+        function toggleListening() {
+            if (isProcessing) {
+                document.getElementById('micStatus').textContent = 'Please wait, processing...';
+                return;
+            }
+            
+            if (!recognition) {
+                const initialized = initSpeechRecognition();
+                if (!initialized) return;
+            }
+            
+            if (isListening) {
+                console.log('Stopping recognition');
+                recognition.stop();
+            } else {
+                try {
+                    console.log('Starting recognition');
+                    if (listeningTimeout) {
+                        clearTimeout(listeningTimeout);
+                        listeningTimeout = null;
+                    }
+                    recognition.start();
+                } catch (e) {
+                    console.error('Start error:', e);
+                    document.getElementById('micStatus').textContent = 'Error starting microphone. Please refresh the page.';
+                    document.getElementById('userTranscript').innerHTML = `<span class="text-red-400">Error: ${e.message}. Please refresh the page.</span>`;
+                    
+                    recognition = null;
+                    setTimeout(() => {
+                        initSpeechRecognition();
+                    }, 1000);
+                }
+            }
+        }
+
+        // ==========================================
+        // FIXED: THE MISSING SOURCE TAG IS HERE
+        // ==========================================
+        async function sendToServer(question) {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            document.getElementById('botResponse').innerHTML = '<span class="text-blue-400">🤔 Thinking<span class="loading-dots"></span></span>';
+            
+            try {
+                const url = isAdmin ? '/voice/process-stream/' : `/voice/customer-stream/${company}/`;
+                console.log('Sending to server:', url, question);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    // I ADDED "source: 'voicecall'" ON THE LINE BELOW:
+                    body: JSON.stringify({ text: question, source: "voicecall" }) 
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Server response:', data);
+                
+                if (data.success && data.bot_response) {
+                    document.getElementById('botResponse').innerHTML = `<span class="text-blue-400">${botName}:</span> ${data.bot_response}`;
+                    
+                    if (data.audio_response && data.audio_response.length > 0) {
+                        playAudioResponse(data.audio_response);
+                    } else {
+                        speakResponse(data.bot_response);
+                    }
+                } else {
+                    document.getElementById('botResponse').innerHTML = `<span class="text-red-400">Error:</span> ${data.error || 'Could not get response'}`;
+                    speakResponse("Sorry, I encountered an error. Please try again.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('botResponse').innerHTML = '<span class="text-red-400">Connection error. Please try again.</span>';
+                speakResponse("Sorry, there was a connection error. Please check your internet and try again.");
+            } finally {
+                isProcessing = false;
+                document.getElementById('micStatus').textContent = 'Click to start speaking';
+            }
+        }
+
+        function playAudioResponse(base64Audio) {
+            try {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                
+                const binaryString = atob(base64Audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'audio/mp3' });
+                const audioUrl = URL.createObjectURL(blob);
+                
+                currentAudio = new Audio(audioUrl);
+                currentAudio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    currentAudio = null;
+                };
+                currentAudio.onerror = (e) => {
+                    console.error('Audio playback error:', e);
+                    URL.revokeObjectURL(audioUrl);
+                    currentAudio = null;
+                    const botResponseDiv = document.getElementById('botResponse');
+                    const text = botResponseDiv.innerText.replace(`${botName}:`, '').trim();
+                    speakResponse(text);
+                };
+                currentAudio.play().catch(err => {
+                    console.error('Playback failed:', err);
+                    const botResponseDiv = document.getElementById('botResponse');
+                    const text = botResponseDiv.innerText.replace(`${botName}:`, '').trim();
+                    speakResponse(text);
+                });
+            } catch (error) {
+                console.error('Audio playback error:', error);
+                const botResponseDiv = document.getElementById('botResponse');
+                const text = botResponseDiv.innerText.replace(`${botName}:`, '').trim();
+                speakResponse(text);
+            }
+        }
+
+        function speakResponse(text) {
+            if (!text) return;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                
+                const speak = () => {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    utterance.volume = 1;
+                    
+                    const voices = window.speechSynthesis.getVoices();
+                    const preferredVoice = voices.find(voice => 
+                        voice.lang === 'en-US' && (voice.name.includes('Google') || voice.name.includes('Samantha'))
+                    ) || voices.find(voice => voice.lang === 'en-US');
+                    
+                    if (preferredVoice) {
+                        utterance.voice = preferredVoice;
+                    }
+                    
+                    utterance.onerror = (e) => {
+                        console.error('Speech error:', e);
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                };
+                
+                if (window.speechSynthesis.getVoices().length > 0) {
+                    speak();
+                } else {
+                    window.speechSynthesis.onvoiceschanged = speak;
+                }
+            } else {
+                console.warn('Speech synthesis not supported');
+            }
+        }
+
+        async function sendTextQuestion() {
+            if (isProcessing) return;
+            
+            const input = document.getElementById('textQuestion');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            document.getElementById('userTranscript').innerHTML = `<span class="text-green-400">You:</span> ${question}`;
+            input.value = '';
+            await sendToServer(question);
+        }
+
+        function endCall() {
+            callActive = false;
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+            if (listeningTimeout) {
+                clearTimeout(listeningTimeout);
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            if (isAdmin) {
+                window.location.href = '/dashboard/#voice-analytics';
+            } else {
+                window.location.href = `/chat/${company}/`;
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function requestMicrophonePermission() {
+            try {
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone permission granted');
+                return true;
+            } catch (err) {
+                console.error('Microphone permission denied:', err);
+                document.getElementById('userTranscript').innerHTML = '<span class="text-red-400">Microphone access denied. Please allow microphone access and refresh the page.</span>';
+                return false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const hasPermission = await requestMicrophonePermission();
+            if (hasPermission) {
+                initSpeechRecognition();
+            }
+            
+            setTimeout(() => {
+                if (callActive) {
+                    const welcomeMsg = `Hello! I'm ${botName}. Click the microphone and ask me anything!`;
+                    speakResponse(welcomeMsg);
+                }
+            }, 1500);
+            
+            const textInput = document.getElementById('textQuestion');
+            if (textInput) {
+                textInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendTextQuestion();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - SuperAI Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Hide all sections by default; will be shown via JS */
+      .tab-section {
+        display: none;
+      }
+      #knowledge {
+        display: block; /* Show knowledge base by default */
+      }
+      
+      /* --- NEW: COLOR SCHEME CLASSES --- */
+      .bot-color-blue { background-color: #3b82f6; }
+      .bot-color-green { background-color: #10b981; }
+      .bot-color-purple { background-color: #8b5cf6; }
+      .bot-color-red { background-color: #ef4444; }
+
+      /* --- NEW: TOAST NOTIFICATION --- */
+      .toast-notification {
+        position: fixed; bottom: 30px; right: 30px; padding: 16px 24px; border-radius: 12px; 
+        color: white; font-weight: bold; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.4s ease;
+      }
+      .toast-notification.show { transform: translateY(0); opacity: 1; }
+      .toast-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4); }
+      .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 20px rgba(239, 68, 68, 0.4); }
+      
+      /* Voice Analytics Styles */
+      .voice-analytics {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+      }
+      
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+      
+      .stat-card {
+        background: #0f172a;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #334155;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        border-color: #3b82f6;
+      }
+      
+      .stat-number {
+        font-size: 36px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin: 10px 0;
+      }
+      
+      .stat-number-green {
+        background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      
+      .stat-number-purple {
+        background: linear-gradient(135deg, #c084fc 0%, #f472b6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      
+      .stat-number-orange {
+        background: linear-gradient(135deg, #fb923c 0%, #facc15 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      
+      .voice-controls {
+        margin-top: 20px;
+        padding: 20px;
+        background: #0f172a;
+        border-radius: 12px;
+        border: 1px solid #334155;
+      }
+      
+      .test-voice-btn {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        margin: 10px 0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .test-voice-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(59,130,246,0.3);
+      }
+      
+      .test-result {
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #1e293b;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .listening-animation {
+        animation: pulse 1s infinite;
+      }
+      
+      /* Voice Call Button Styles */
+      .voice-call-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        transition: all 0.3s ease;
+      }
+      
+      .voice-call-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+      }
+
+      /* Conversation Card Styles */
+      .conversation-card {
+        transition: all 0.3s ease;
+      }
+      
+      .conversation-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+
+      /* Stats Card Styles */
+      .stats-card {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        transition: all 0.3s ease;
+      }
+      
+      .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      }
+      
+      /* Animated counter */
+      @keyframes countUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .count-animated {
+        animation: countUp 0.5s ease-out;
+      }
+      
+      /* Refresh button */
+      .refresh-btn {
+        transition: all 0.3s ease;
+      }
+      
+      .refresh-btn:hover {
+        transform: rotate(180deg);
+      }
+      
+      .refresh-spinning {
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-white font-sans flex flex-col h-screen">
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-notification"></div>
+
+    <!-- Navigation (fixed at top) -->
+    <nav class="bg-slate-900 border-b border-slate-800 flex-shrink-0">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <div class="text-2xl font-bold text-blue-500">SuperAI Dashboard</div>
+          <button onclick="refreshStats()" class="refresh-btn text-slate-400 hover:text-blue-400" title="Refresh Stats">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-slate-400">{{ user.username }}</span>
+          <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition">Logout</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main layout: sidebar + content, takes remaining height -->
+    <div class="flex flex-1 min-h-0">
+      <!-- Sidebar -->
+      <div class="w-64 bg-slate-900 border-r border-slate-800 overflow-y-auto">
+        <div class="p-6">
+          <h2 class="text-sm font-bold text-slate-400 uppercase mb-6">Menu</h2>
+          <nav class="space-y-3" id="tabMenu">
+            <a href="#knowledge" class="tab-link block px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 font-semibold border border-blue-600/30" data-target="knowledge">
+              📚 Knowledge Base
+            </a>
+            <a href="#settings" class="tab-link block px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition" data-target="settings">
+              ⚙️ Bot Settings
+            </a>
+            <a href="{% url 'chat_page' %}" class="block px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition">
+              🧪 Test Bot
+            </a>
+            <a href="#analytics" class="tab-link block px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition" data-target="analytics">
+              📊 Analytics
+            </a>
+            <a href="#voice-analytics" class="tab-link block px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition" data-target="voice-analytics">
+              🎤 Voice Analytics
+            </a>
+            <a href="#sharing" class="tab-link block px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 transition" data-target="sharing">
+              🔗 Share Bot
+            </a>
+          </nav>
+
+          <!-- Bot Status & Quick Stats in Sidebar -->
+          <div class="mt-10 space-y-4">
+            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div class="text-sm font-semibold text-slate-300 mb-3">Bot Status</div>
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full {% if bot_config.is_active %}bg-green-500{% else %}bg-red-500{% endif %}"></div>
+                <span class="text-sm">{% if bot_config.is_active %}Online{% else %}Offline{% endif %}</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-2">Knowledge items: {{ knowledge_count }}</div>
+            </div>
+            
+            <!-- Quick Stats in Sidebar -->
+            <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+              <div class="text-sm font-semibold text-slate-300 mb-3">Quick Stats</div>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-slate-400">💬 Chat</span>
+                  <span class="text-sm font-bold text-blue-400" id="sidebarChatCount">{{ chatbot_conversations|default:0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-slate-400">🎤 Voice</span>
+                  <span class="text-sm font-bold text-green-400" id="sidebarVoiceCount">{{ voicebot_conversations|default:0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-slate-400">📞 Calls</span>
+                  <span class="text-sm font-bold text-purple-400" id="sidebarCallCount">{{ voicecall_conversations|default:0 }}</span>
+                </div>
+                <hr class="border-slate-700">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-slate-400">📊 Total</span>
+                  <span class="text-sm font-bold text-white" id="sidebarTotalCount">{{ total_conversations }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content (scrollable) -->
+      <main class="flex-1 p-8 overflow-y-auto">
+        <!-- Header Stats (always visible) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div class="stats-card bg-slate-800 rounded-lg p-6 border border-slate-700">
+            <div class="text-slate-400 text-sm font-semibold mb-2">📚 Knowledge Items</div>
+            <div class="text-3xl font-bold text-blue-400 count-animated">{{ knowledge_count }}</div>
+            <div class="text-xs text-slate-500 mt-1">Documents uploaded</div>
+          </div>
+          <div class="stats-card bg-slate-800 rounded-lg p-6 border border-slate-700">
+            <div class="text-slate-400 text-sm font-semibold mb-2">🤖 Bot Name</div>
+            <div class="text-xl font-bold text-slate-300 truncate">{{ bot_config.bot_name }}</div>
+            <div class="flex items-center space-x-2 mt-2">
+              <div class="w-2 h-2 rounded-full {% if bot_config.is_active %}bg-green-500{% else %}bg-red-500{% endif %}"></div>
+              <span class="text-xs text-slate-500">{% if bot_config.is_active %}Active{% else %}Inactive{% endif %}</span>
+            </div>
+          </div>
+          <div class="stats-card bg-slate-800 rounded-lg p-6 border border-slate-700">
+            <div class="text-slate-400 text-sm font-semibold mb-2">📅 Today's Interactions</div>
+            <div class="text-3xl font-bold text-orange-400 count-animated" id="todayCount">{{ today_conversations|default:0 }}</div>
+            <div class="text-xs text-slate-500 mt-1">Conversations today</div>
+          </div>
+          <div class="stats-card bg-slate-800 rounded-lg p-6 border border-slate-700">
+            <div class="text-slate-400 text-sm font-semibold mb-2">📊 Total Interactions</div>
+            <div class="text-3xl font-bold text-purple-400 count-animated" id="totalCount">{{ total_conversations }}</div>
+            <div class="text-xs text-slate-500 mt-1">All time conversations</div>
+          </div>
+        </div>
+
+        <!-- Conversation Type Stats Row - MAIN FOCUS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div class="bg-gradient-to-br from-blue-900/40 to-blue-800/20 rounded-xl p-6 border border-blue-700/50 hover:shadow-lg hover:shadow-blue-500/10 transition">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center">
+                <span class="text-2xl">💬</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+                <span class="text-xs text-blue-400 font-semibold">Chat</span>
+              </div>
+            </div>
+            <div class="text-slate-400 text-sm font-semibold mb-1">Chatbot Conversations</div>
+            <div class="text-5xl font-bold text-blue-400 count-animated" id="chatCount">{{ chatbot_conversations|default:0 }}</div>
+            <div class="text-xs text-slate-500 mt-2">Text-based interactions</div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-green-900/40 to-green-800/20 rounded-xl p-6 border border-green-700/50 hover:shadow-lg hover:shadow-green-500/10 transition">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 rounded-xl bg-green-600/20 flex items-center justify-center">
+                <span class="text-2xl">🎤</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+                <span class="text-xs text-green-400 font-semibold">Voice</span>
+              </div>
+            </div>
+            <div class="text-slate-400 text-sm font-semibold mb-1">Voicebot Sessions</div>
+            <div class="text-5xl font-bold text-green-400 count-animated" id="voiceCount">{{ voicebot_conversations|default:0 }}</div>
+            <div class="text-xs text-slate-500 mt-2">Voice-to-text interactions</div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-purple-900/40 to-purple-800/20 rounded-xl p-6 border border-purple-700/50 hover:shadow-lg hover:shadow-purple-500/10 transition">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 rounded-xl bg-purple-600/20 flex items-center justify-center">
+                <span class="text-2xl">📞</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                <span class="text-xs text-purple-400 font-semibold">Call</span>
+              </div>
+            </div>
+            <div class="text-slate-400 text-sm font-semibold mb-1">AI Voice Calls</div>
+            <div class="text-5xl font-bold text-purple-400 count-animated" id="callCount">{{ voicecall_conversations|default:0 }}</div>
+            <div class="text-xs text-slate-500 mt-2">Live voice call sessions</div>
+          </div>
+        </div>
+
+        <!-- Percentage Breakdown Bar -->
+        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Interaction Breakdown</h3>
+            <span class="text-sm text-slate-400" id="breakdownLabel">Loading...</span>
+          </div>
+          <div class="w-full h-8 rounded-full overflow-hidden bg-slate-900 flex" id="breakdownBar">
+            <div class="h-full bg-blue-500 transition-all duration-500 flex items-center justify-center text-xs font-bold" 
+                 id="chatBar" style="width: 0%">💬</div>
+            <div class="h-full bg-green-500 transition-all duration-500 flex items-center justify-center text-xs font-bold" 
+                 id="voiceBar" style="width: 0%">🎤</div>
+            <div class="h-full bg-purple-500 transition-all duration-500 flex items-center justify-center text-xs font-bold" 
+                 id="callBar" style="width: 0%">📞</div>
+          </div>
+          <div class="flex justify-between mt-3">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span class="text-xs text-slate-400">Chat: <span id="chatPercent">0%</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="text-xs text-slate-400">Voice: <span id="voicePercent">0%</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span class="text-xs text-slate-400">Calls: <span id="callPercent">0%</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Sections Container -->
+        <div class="space-y-8">
+          <!-- Knowledge Base Section -->
+          <section id="knowledge" class="tab-section bg-slate-800 rounded-xl border border-slate-700 p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">📚 Knowledge Base Management</h2>
+
+            <!-- Upload Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <!-- Text Upload -->
+              <div class="bg-slate-900 rounded-lg p-6 border border-slate-700">
+                <h3 class="text-lg font-semibold mb-4">Add Text Content</h3>
+                <form method="post" id="textForm" class="space-y-4">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="upload_text" />
+                  <textarea name="content" required class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition resize-none" rows="5" placeholder="Paste company information, FAQs, policies, etc..."></textarea>
+                  <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">Upload Text</button>
+                </form>
+              </div>
+
+              <!-- File Upload -->
+              <div class="bg-slate-900 rounded-lg p-6 border border-slate-700">
+                <h3 class="text-lg font-semibold mb-4">Upload Document</h3>
+                <form method="post" id="pdfForm" enctype="multipart/form-data" class="space-y-4">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="upload_file" />
+                  <div class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-blue-500 transition cursor-pointer" id="dropZone">
+                    <div class="text-4xl mb-2">📄</div>
+                    <p class="text-slate-400 mb-2">Drag and drop your file here</p>
+                    <p class="text-sm text-slate-500 mb-4">or click to select</p>
+                    <p id="fileName" class="text-green-400 text-sm hidden"></p>
+                    <input type="file" name="file" id="pdfInput" class="hidden" required />
+                  </div>
+                  <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">Upload File</button>
+                  <p class="text-xs text-slate-400">Supported: PDF, Image, TXT, DOCX (Max 25MB)</p>
+                </form>
+              </div>
+            </div>
+
+            <!-- Knowledge Items List -->
+            <div class="bg-slate-900 rounded-lg p-6 border border-slate-700">
+              <h3 class="text-lg font-semibold mb-4">Your Knowledge Items ({{ knowledge_count }} total)</h3>
+              <div class="space-y-2 max-h-96 overflow-y-auto">
+                {% if knowledge %} 
+                  {% for item in knowledge %}
+                    <div class="bg-slate-800 rounded p-4 flex justify-between items-start hover:bg-slate-700/50 transition group">
+                      <div class="flex-1 pr-4">
+                        <div class="text-xs text-slate-500 mb-1">
+                          {% if item.source_type == 'pdf' %}📄{% else %}📝{% endif %} {{ item.source_type|upper }} {% if item.source_filename %} - {{ item.source_filename }}{% endif %}
+                        </div>
+                        <p class="text-slate-300 text-sm line-clamp-2">{{ item.content }}</p>
+                        <div class="text-xs text-slate-500 mt-1">{{ item.created_at|date:"M d, Y H:i" }}</div>
+                      </div>
+                      <button type="button" onclick="deleteKnowledge({{ item.id }})" class="text-red-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                    </div>
+                  {% endfor %} 
+                {% else %}
+                  <div class="text-center py-8 text-slate-400">
+                    <p>No knowledge items yet. Upload some content to get started!</p>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </section>
+
+          <!-- Bot Settings Section -->
+          <section id="settings" class="tab-section bg-slate-800 rounded-xl border border-slate-700 p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">⚙️ Bot Configuration</h2>
+
+            <form method="post" id="configForm" class="space-y-6">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_config" />
+
+              <!-- NEW: Two column layout to add preview -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: Settings -->
+                <div class="space-y-6">
+                  <!-- Bot Name -->
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Bot Name</label>
+                    <input type="text" name="bot_name" value="{{ bot_config.bot_name }}" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition" placeholder="e.g., Support Assistant" />
+                    <p class="text-sm text-slate-400 mt-1">The name customers will see</p>
+                  </div>
+
+                  <!-- Welcome Message -->
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Welcome Message</label>
+                    <textarea name="welcome_message" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition resize-none" rows="3" placeholder="Greet your customers...">{{ bot_config.welcome_message }}</textarea>
+                  </div>
+
+                  <!-- System Prompt -->
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">System Prompt</label>
+                    <textarea name="system_prompt" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition resize-none" rows="4" placeholder="Customize bot behavior...">{{ bot_config.system_prompt }}</textarea>
+                    <p class="text-xs text-slate-400 mt-1">Use {company_name} placeholder for your company name</p>
+                  </div>
+
+                  <!-- Color Scheme -->
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Color Scheme</label>
+                    <!-- Added onchange="updateColorPreview()" -->
+                    <select name="color_scheme" id="colorSelect" onchange="updateColorPreview()" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition">
+                      {% for scheme in color_schemes %}
+                        <option value="{{ scheme }}" {% if scheme == bot_config.color_scheme %}selected{% endif %}>{{ scheme|title }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <!-- Active Status -->
+                  <div class="flex items-center space-x-3">
+                    <label class="flex items-center cursor-pointer">
+                      <input type="checkbox" name="is_active" {% if bot_config.is_active %}checked{% endif %} class="w-5 h-5 bg-slate-900 border border-slate-600 rounded focus:ring-2 focus:ring-blue-500/20 cursor-pointer" />
+                      <span class="ml-3 text-sm font-semibold text-slate-300">Bot is Active</span>
+                    </label>
+                    <span class="text-xs text-slate-500">(Customers can chat only if enabled)</span>
+                  </div>
+                </div>
+
+                <!-- Right Column: Live Preview -->
+                <div>
+                  <label class="block text-sm font-semibold text-slate-300 mb-2">Chat Preview</label>
+                  <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 h-full flex flex-col justify-end" style="min-height: 350px;">
+                    <div class="space-y-3">
+                      <div class="flex justify-end">
+                        <div class="bg-slate-700 text-white px-4 py-2 rounded-2xl rounded-br-sm text-sm max-w-[80%]">
+                          Hi, I need some help.
+                        </div>
+                      </div>
+                      <div class="flex justify-start">
+                        <!-- DYNAMIC COLOR CLASS ADDED HERE -->
+                        <div id="previewBubble" class="bot-color-{{ bot_config.color_scheme|default:'blue' }} text-white px-4 py-2 rounded-2xl rounded-bl-sm text-sm max-w-[80%] transition-colors duration-300">
+                          Hello! How can I help you today?
+                        </div>
+                      </div>
+                      <div class="flex justify-start">
+                        <div id="previewTyping" class="bot-color-{{ bot_config.color_scheme|default:'blue' }} px-4 py-3 rounded-2xl rounded-bl-sm flex space-x-1 opacity-50 transition-colors duration-300">
+                          <div class="w-2 h-2 bg-white rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                          <div class="w-2 h-2 bg-white rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                          <div class="w-2 h-2 bg-white rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Save Settings</button>
+            </form>
+          </section>
+
+          <!-- Analytics Section (Recent Conversations) -->
+          <section id="analytics" class="tab-section bg-slate-800 rounded-xl border border-slate-700 p-8">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold flex items-center">📊 Recent Conversations</h2>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-slate-400">Total: <strong class="text-white">{{ total_conversations }}</strong></span>
+                <button onclick="refreshStats()" class="text-slate-400 hover:text-blue-400 ml-2" title="Refresh">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Filter Tabs for Conversation Types -->
+            <div class="flex space-x-2 mb-6 border-b border-slate-700 pb-4">
+              <button onclick="filterConversations('all')" class="filter-btn active-filter px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold transition">
+                All ({{ total_conversations }})
+              </button>
+              <button onclick="filterConversations('chatbot')" class="filter-btn px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm font-semibold transition">
+                💬 Chat ({{ chatbot_conversations|default:0 }})
+              </button>
+              <button onclick="filterConversations('voicebot')" class="filter-btn px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm font-semibold transition">
+                🎤 Voice ({{ voicebot_conversations|default:0 }})
+              </button>
+              <button onclick="filterConversations('voicecall')" class="filter-btn px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 text-sm font-semibold transition">
+                📞 Calls ({{ voicecall_conversations|default:0 }})
+              </button>
+            </div>
+            
+            {% if recent_conversations and recent_conversations|length > 0 %}
+              <div class="space-y-4" id="conversationsList">
+                {% for conv in recent_conversations %}
+                  <div class="conversation-card bg-slate-900 rounded-lg p-4 border border-slate-700 hover:border-blue-500/50 transition" data-type="{{ conv.conversation_type|default:'chatbot' }}">
+                    <div class="flex justify-between items-start mb-3">
+                      <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center
+                          {% if conv.conversation_type == 'voicecall' %}bg-purple-600
+                          {% elif conv.conversation_type == 'voicebot' %}bg-green-600
+                          {% else %}bg-blue-600{% endif %}">
+                          <span class="text-sm font-bold">
+                            {% if conv.conversation_type == 'voicecall' %}📞
+                            {% elif conv.conversation_type == 'voicebot' %}🎤
+                            {% else %}💬{% endif %}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="font-semibold text-slate-200">{{ conv.customer_name }}</span>
+                          <span class="text-xs px-2 py-1 rounded-full ml-2
+                            {% if conv.conversation_type == 'voicecall' %}bg-purple-600/20 text-purple-400
+                            {% elif conv.conversation_type == 'voicebot' %}bg-green-600/20 text-green-400
+                            {% else %}bg-blue-600/20 text-blue-400{% endif %}">
+                            {% if conv.conversation_type == 'voicecall' %}AI Call
+                            {% elif conv.conversation_type == 'voicebot' %}Voice
+                            {% else %}Chat{% endif %}
+                          </span>
+                        </div>
+                      </div>
+                      <span class="text-xs text-slate-500">{{ conv.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    
+                    <div class="space-y-3 ml-11">
+                      <!-- Customer Message -->
+                      <div class="bg-slate-800/50 rounded-lg p-3 border-l-4 
+                        {% if conv.conversation_type == 'voicecall' %}border-purple-500
+                        {% elif conv.conversation_type == 'voicebot' %}border-green-500
+                        {% else %}border-blue-500{% endif %}">
+                        <div class="flex items-start space-x-2">
+                          <span class="text-slate-400 text-sm font-semibold">
+                            {% if conv.conversation_type == 'voicecall' %}📞 Caller:
+                            {% elif conv.conversation_type == 'voicebot' %}🎤 Spoken:
+                            {% else %}👤 Customer:{% endif %}
+                          </span>
+                          <p class="text-slate-300 text-sm flex-1">{{ conv.customer_message }}</p>
+                        </div>
+                      </div>
+                      
+                      <!-- Bot Response -->
+                      <div class="bg-slate-800/50 rounded-lg p-3 border-l-4 border-green-500">
+                        <div class="flex items-start space-x-2">
+                          <span class="text-green-400 text-sm font-semibold">🤖 Bot:</span>
+                          <p class="text-slate-300 text-sm flex-1">{{ conv.bot_response }}</p>
+                        </div>
+                      </div>
+                      
+                      {% if conv.call_duration %}
+                        <div class="flex justify-end">
+                          <div class="text-xs text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">
+                            📞 Duration: {{ conv.call_duration }}s
+                          </div>
+                        </div>
+                      {% endif %}
+                      
+                      {% if conv.rating %}
+                        <div class="flex justify-end">
+                          <div class="text-xs text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full">
+                            ⭐ {{ conv.rating }}/5
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-12 bg-slate-900 rounded-lg border border-slate-700">
+                <div class="text-6xl mb-4">💬</div>
+                <h3 class="text-xl font-semibold text-slate-300 mb-2">No Conversations Yet</h3>
+                <p class="text-slate-400 mb-6">Start chatting with your bot to see conversations here</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                  <a href="{% url 'chat_page' %}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg transition">
+                    <span>💬</span><span>Test Chatbot</span>
+                  </a>
+                  <button onclick="testVoiceRecognition()" class="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-3 rounded-lg transition">
+                    <span>🎤</span><span>Test Voicebot</span>
+                  </button>
+                  <a href="{% url 'voice_call' %}" class="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-lg transition">
+                    <span>📞</span><span>AI Voice Call</span>
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+          </section>
+
+          <!-- Voice Analytics Section with Real Data -->
+          <section id="voice-analytics" class="tab-section">
+            <div class="voice-analytics">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold flex items-center">🎤 Voice Assistant Analytics</h2>
+                <button onclick="refreshStats()" class="text-slate-400 hover:text-blue-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <h3 class="text-slate-400 text-sm font-semibold mb-2">🎤 Voicebot Sessions</h3>
+                  <p class="stat-number stat-number-green" id="voiceSessions">{{ voicebot_conversations|default:0 }}</p>
+                  <p class="text-xs text-slate-500">Voice-to-text interactions</p>
+                </div>
+                <div class="stat-card">
+                  <h3 class="text-slate-400 text-sm font-semibold mb-2">📞 Voice Calls</h3>
+                  <p class="stat-number stat-number-purple" id="voiceCalls">{{ voicecall_conversations|default:0 }}</p>
+                  <p class="text-xs text-slate-500">Real-time AI voice calls</p>
+                </div>
+                <div class="stat-card">
+                  <h3 class="text-slate-400 text-sm font-semibold mb-2">📊 Total Voice Interactions</h3>
+                  <p class="stat-number stat-number-orange" id="totalVoice">{{ total_voice_conversations|default:0 }}</p>
+                  <p class="text-xs text-slate-500">All voice-based sessions</p>
+                </div>
+                <div class="stat-card">
+                  <h3 class="text-slate-400 text-sm font-semibold mb-2">⏱️ Avg Call Duration</h3>
+                  <p class="stat-number" id="avgCallDuration">{{ avg_call_duration|default:"0s" }}</p>
+                  <p class="text-xs text-slate-500">Average voice call time</p>
+                </div>
+              </div>
+              
+              <div class="voice-controls">
+                <h3 class="text-lg font-semibold mb-4">🎙️ Voice Features</h3>
+                
+                <div class="mb-6">
+                  <a href="{% url 'voice_call' %}" class="voice-call-btn inline-flex items-center space-x-3 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold px-8 py-4 rounded-xl transition transform hover:scale-105 shadow-lg shadow-green-500/30 w-full justify-center">
+                    <span class="text-2xl">📞</span>
+                    <span>Start Voice Call Session</span>
+                    <span class="text-xl">→</span>
+                  </a>
+                  <p class="text-xs text-slate-400 mt-2 text-center">Experience real-time voice conversation with your AI assistant</p>
+                </div>
+                
+                <button id="testVoiceBtn" class="test-voice-btn w-full">
+                  🎤 Test Voice Recognition
+                </button>
+                <div id="testResult" class="test-result mt-4">
+                  Ready to test voice recognition
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Share Bot Section -->
+          <section id="sharing" class="tab-section bg-slate-800 rounded-xl border border-slate-700 p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">🔗 Share Your Bot</h2>
+            <div class="bg-slate-900 rounded-lg p-6 border border-slate-700">
+              <p class="text-sm text-slate-400 mb-3">Public link for your customers:</p>
+              <div class="flex items-center space-x-2">
+                <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}/chat/{{ user.username }}/" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white text-sm" id="shareLink" />
+                <button type="button" onclick="copyToClipboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm font-semibold" id="copyBtn">Copy</button>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Share this link with your customers to let them chat with your bot</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // --- NEW: Live Color Preview Function ---
+      function updateColorPreview() {
+        const selectedColor = document.getElementById('colorSelect').value;
+        const bubble = document.getElementById('previewBubble');
+        const typing = document.getElementById('previewTyping');
+        
+        // Remove all color classes
+        bubble.classList.remove('bot-color-blue', 'bot-color-green', 'bot-color-purple', 'bot-color-red');
+        typing.classList.remove('bot-color-blue', 'bot-color-green', 'bot-color-purple', 'bot-color-red');
+        
+        // Add new color class
+        bubble.classList.add(`bot-color-${selectedColor}`);
+        typing.classList.add(`bot-color-${selectedColor}`);
+      }
+
+      // --- NEW: Toast Notification Function ---
+      function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toastContainer');
+        toast.textContent = message;
+        toast.className = `toast-notification ${isSuccess ? 'toast-success' : 'toast-error'} show`;
+        
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 3000);
+      }
+
+      // Initialize stats on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        updateBreakdownBar();
+      });
+      
+      // Update the breakdown bar based on counts
+      function updateBreakdownBar() {
+        const chatCount = parseInt(document.getElementById('chatCount')?.textContent || 0);
+        const voiceCount = parseInt(document.getElementById('voiceCount')?.textContent || 0);
+        const callCount = parseInt(document.getElementById('callCount')?.textContent || 0);
+        const total = chatCount + voiceCount + callCount;
+        
+        if (total === 0) {
+          document.getElementById('chatBar').style.width = '33.33%';
+          document.getElementById('voiceBar').style.width = '33.33%';
+          document.getElementById('callBar').style.width = '33.34%';
+          document.getElementById('chatPercent').textContent = '0%';
+          document.getElementById('voicePercent').textContent = '0%';
+          document.getElementById('callPercent').textContent = '0%';
+          document.getElementById('breakdownLabel').textContent = 'No interactions yet';
+          return;
+        }
+        
+        const chatPercent = ((chatCount / total) * 100).toFixed(1);
+        const voicePercent = ((voiceCount / total) * 100).toFixed(1);
+        const callPercent = ((callCount / total) * 100).toFixed(1);
+        
+        document.getElementById('chatBar').style.width = chatPercent + '%';
+        document.getElementById('voiceBar').style.width = voicePercent + '%';
+        document.getElementById('callBar').style.width = callPercent + '%';
+        
+        document.getElementById('chatPercent').textContent = chatPercent + '%';
+        document.getElementById('voicePercent').textContent = voicePercent + '%';
+        document.getElementById('callPercent').textContent = callPercent + '%';
+        
+        document.getElementById('breakdownLabel').textContent = `${total} total interactions`;
+      }
+      
+      // Refresh stats via API (if available) or reload page
+      async function refreshStats() {
+        const refreshBtn = document.querySelector('.refresh-btn svg');
+        refreshBtn.classList.add('refresh-spinning');
+        location.reload();
+      }
+      
+      // Helper to update count with animation
+      function updateCountElement(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.textContent = value;
+          el.classList.remove('count-animated');
+          void el.offsetWidth; // Trigger reflow
+          el.classList.add('count-animated');
+        }
+      }
+      
+      // Conversation filtering
+      function filterConversations(type) {
+        const conversations = document.querySelectorAll('.conversation-card');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
+        filterBtns.forEach(btn => {
+          btn.classList.remove('bg-blue-600', 'text-white');
+          btn.classList.add('bg-slate-700', 'text-slate-300');
+        });
+        event.target.classList.remove('bg-slate-700', 'text-slate-300');
+        event.target.classList.add('bg-blue-600', 'text-white');
+        
+        conversations.forEach(conv => {
+          if (type === 'all') {
+            conv.style.display = 'block';
+          } else if (conv.getAttribute('data-type') === type) {
+            conv.style.display = 'block';
+          } else {
+            conv.style.display = 'none';
+          }
+        });
+      }
+      
+      // Test voice recognition function
+      function testVoiceRecognition() {
+        window.location.href = "{% url 'chat_page' %}?mode=voice";
+      }
+      
+      // Tab switching functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const sections = document.querySelectorAll('.tab-section');
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const activeClass = 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-600/30';
+        const inactiveClass = 'text-slate-400 hover:bg-slate-800 transition';
+
+        function showSection(targetId) {
+          sections.forEach(section => {
+            section.style.display = 'none';
+          });
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            targetSection.style.display = 'block';
+          }
+          tabLinks.forEach(link => {
+            link.classList.remove(...activeClass.split(' '));
+            link.classList.add(...inactiveClass.split(' '));
+          });
+          const activeLink = document.querySelector(`.tab-link[data-target="${targetId}"]`);
+          if (activeLink) {
+            activeLink.classList.remove(...inactiveClass.split(' '));
+            activeLink.classList.add(...activeClass.split(' '));
+          }
+        }
+
+        tabLinks.forEach(link => {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = this.getAttribute('data-target');
+            if (target) {
+              showSection(target);
+              history.pushState(null, null, `#${target}`);
+            }
+          });
+        });
+
+        if (window.location.hash) {
+          const hash = window.location.hash.substring(1);
+          const validTargets = ['knowledge', 'settings', 'analytics', 'voice-analytics', 'sharing'];
+          if (validTargets.includes(hash)) {
+            showSection(hash);
+          } else {
+            showSection('knowledge');
+          }
+        } else {
+          showSection('knowledge');
+        }
+      });
+
+      // Voice test functionality
+      const testVoiceBtn = document.getElementById('testVoiceBtn');
+      if (testVoiceBtn) {
+        testVoiceBtn.addEventListener('click', async () => {
+          const resultDiv = document.getElementById('testResult');
+          resultDiv.innerHTML = '🎤 Listening... Speak now';
+          resultDiv.style.color = '#60a5fa';
+          resultDiv.classList.add('listening-animation');
+          
+          try {
+            const response = await fetch('/voice/process/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+              },
+              body: JSON.stringify({})
+            });
+            
+            const data = await response.json();
+            resultDiv.classList.remove('listening-animation');
+            
+            if (data.success) {
+              resultDiv.innerHTML = `
+                <div style="color: #4ade80;">✅ Success!</div>
+                <div style="margin-top: 8px;"><strong>You said:</strong> "${data.user_text}"</div>
+                <div style="margin-top: 4px;"><strong>Bot replied:</strong> "${data.bot_response}"</div>
+              `;
+              resultDiv.style.color = '#4ade80';
+              setTimeout(() => location.reload(), 500);
+            } else {
+              resultDiv.innerHTML = `❌ Error: ${data.error}`;
+              resultDiv.style.color = '#f87171';
+            }
+          } catch (error) {
+            resultDiv.classList.remove('listening-animation');
+            resultDiv.innerHTML = '❌ Failed to connect to voice service.';
+            resultDiv.style.color = '#f87171';
+          }
+        });
+      }
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // Drag and drop for file upload
+      const dropZone = document.getElementById("dropZone");
+      const pdfInput = document.getElementById("pdfInput");
+      if (dropZone) {
+        dropZone.addEventListener("click", () => pdfInput.click());
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.classList.add("border-blue-500", "bg-blue-500/10");
+        });
+        dropZone.addEventListener("dragleave", () => {
+          dropZone.classList.remove("border-blue-500", "bg-blue-500/10");
+        });
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files[0]) { 
+            pdfInput.files = e.dataTransfer.files;
+            const fileName = e.dataTransfer.files[0].name;
+            const fileNameEl = document.getElementById('fileName');
+            if (fileNameEl) {
+              fileNameEl.textContent = fileName;
+              fileNameEl.classList.remove('hidden');
+            }
+          }
+        });
+        pdfInput.addEventListener('change', function() {
+          if (this.files[0]) {
+            const fileNameEl = document.getElementById('fileName');
+            if (fileNameEl) {
+              fileNameEl.textContent = this.files[0].name;
+              fileNameEl.classList.remove('hidden');
+            }
+          }
+        });
+      }
+
+      // Delete knowledge item
+      function deleteKnowledge(id) {
+        if (confirm("Are you sure you want to delete this item?")) {
+          const form = new FormData();
+          form.append("action", "delete_knowledge");
+          form.append("knowledge_id", id);
+          form.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
+
+          fetch(window.location.href, {
+            method: "POST",
+            body: form,
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.status === "success") {
+                showToast("Knowledge deleted successfully!");
+                location.reload();
+              } else {
+                showToast(data.message || "Error deleting", false);
+              }
+            })
+            .catch(error => {
+              showToast("An error occurred while deleting", false);
+            });
+        }
+      }
+
+      // Copy to clipboard
+      function copyToClipboard() {
+        const url = document.getElementById("shareLink");
+        const btn = document.getElementById("copyBtn");
+        if (url) {
+          navigator.clipboard.writeText(url.value).then(() => {
+            btn.textContent = 'Copied!';
+            btn.classList.remove('bg-blue-600');
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+              btn.textContent = 'Copy';
+              btn.classList.remove('bg-green-600');
+              btn.classList.add('bg-blue-600');
+            }, 2000);
+          }).catch(() => {
+            url.select();
+            document.execCommand("copy");
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+          });
+        }
+      }
+
+      // Form submission handlers
+      function handleFormSubmit(formId) {
+        const form = document.getElementById(formId);
+        if (form) {
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(window.location.href, {
+              method: "POST",
+              body: formData,
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.status === "success") {
+                  showToast(data.message, true);
+                  if(formId !== "configForm") {
+                    setTimeout(() => location.reload(), 1000);
+                  }
+                } else {
+                  showToast(data.message || "Error occurred", false);
+                }
+              })
+              .catch(error => {
+                showToast("Network error occurred", false);
+              });
+          });
+        }
+      }
+
+      handleFormSubmit("configForm");
+      handleFormSubmit("textForm");
+      handleFormSubmit("pdfForm");
+    </script>
+  </body>
+</html>

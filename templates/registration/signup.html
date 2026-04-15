@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - VoiceAI Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Override browser autofill styles */
+      input:-webkit-autofill,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background-color: #1e293b !important;
+        caret-color: #ffffff !important;
+      }
+      
+      /* Ensure consistent background color on focus */
+      input:focus {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+      }
+      
+      /* Override any white background on tab */
+      input:not(:focus) {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+      }
+      
+      /* Maintain background when typing */
+      input:user-valid,
+      input:user-invalid {
+        background-color: #1e293b !important;
+      }
+      
+      /* Prevent white background on any state */
+      input {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        transition: all 0.3s ease;
+      }
+      
+      /* Keep border highlight but not background change */
+      input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        outline: none !important;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white font-sans min-h-screen flex items-center justify-center py-12 px-4"
+  >
+    <div class="w-full max-w-md">
+      <!-- Logo Section -->
+      <div class="text-center mb-10">
+        <div class="text-4xl font-bold text-blue-500 mb-2">VoiceAI</div>
+        <p class="text-slate-400">Create Your Support Bot</p>
+      </div>
+
+      <!-- Signup Form -->
+      <div
+        class="bg-slate-800 rounded-2xl shadow-2xl shadow-blue-900/20 p-8 border border-slate-700"
+      >
+        <h1 class="text-3xl font-bold mb-8 text-center">Create Account</h1>
+
+        {% if form.non_field_errors %}
+        <div
+          class="bg-red-900/30 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6"
+        >
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" class="space-y-5">
+          {% csrf_token %}
+
+          <!-- Username Field -->
+          <div>
+            <label
+              for="id_username"
+              class="block text-sm font-semibold text-slate-300 mb-2"
+            >
+              Company Name
+            </label>
+            <input
+              type="text"
+              name="username"
+              id="id_username"
+              value="{{ form.username.value|default:'' }}"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
+              placeholder="Your company name (no spaces)"
+              autocomplete="off"
+              required
+            />
+            {% if form.username.errors %}
+            <p class="text-red-400 text-sm mt-2">{{ form.username.errors }}</p>
+            {% endif %}
+            <p class="text-slate-400 text-xs mt-1">
+              Used for your bot's public URL (e.g., /chat/yourcompany/)
+            </p>
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label
+              for="id_password1"
+              class="block text-sm font-semibold text-slate-300 mb-2"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              name="password1"
+              id="id_password1"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
+              placeholder="Create a strong password"
+              autocomplete="off"
+              required
+            />
+            {% if form.password1.errors %}
+            <p class="text-red-400 text-sm mt-2">{{ form.password1.errors }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Password Confirmation Field -->
+          <div>
+            <label
+              for="id_password2"
+              class="block text-sm font-semibold text-slate-300 mb-2"
+            >
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              name="password2"
+              id="id_password2"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
+              placeholder="Re-enter your password"
+              autocomplete="off"
+              required
+            />
+            {% if form.password2.errors %}
+            <p class="text-red-400 text-sm mt-2">{{ form.password2.errors }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Signup Button -->
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-lg transition transform hover:scale-105 shadow-lg shadow-blue-500/30 mt-8"
+          >
+            Create Account
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative my-8">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-slate-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-slate-800 text-slate-400">or</span>
+          </div>
+        </div>
+
+        <!-- Login Link -->
+        <div class="text-center">
+          <p class="text-slate-400 mb-4">Already have an account?</p>
+          <a
+            href="{% url 'login' %}"
+            class="inline-block w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition border border-slate-600 hover:border-slate-500"
+          >
+            Sign In
+          </a>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="mt-6 text-center">
+          <a
+            href="{% url 'landing' %}"
+            class="text-blue-400 hover:text-blue-300 text-sm transition"
+          >
+            ← Back to Home
+          </a>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="mt-10 bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+        <h3 class="font-bold text-slate-300 mb-4">What You Get:</h3>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li class="flex items-start">
+            <span class="text-blue-500 mr-3">✓</span>
+            <span>Upload PDFs and documents</span>
+          </li>
+          <li class="flex items-start">
+            <span class="text-blue-500 mr-3">✓</span>
+            <span>Customize bot name and settings</span>
+          </li>
+          <li class="flex items-start">
+            <span class="text-blue-500 mr-3">✓</span>
+            <span>Voice-enabled customer support</span>
+          </li>
+          <li class="flex items-start">
+            <span class="text-blue-500 mr-3">✓</span>
+            <span>Analytics dashboard</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

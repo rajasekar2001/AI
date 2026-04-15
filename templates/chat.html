@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Your Bot - VoiceAI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Additional voice button styles */
+      .voice-button {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+      }
+      
+      .voice-button.listening {
+        animation: pulse 1.5s infinite;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.7); }
+        70% { box-shadow: 0 0 0 20px rgba(245, 87, 108, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 87, 108, 0); }
+      }
+      
+      .status-text {
+        font-size: 12px;
+        color: #cbd5e1;
+        margin-top: 5px;
+        text-align: center;
+      }
+      
+      .input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      /* Animation for recording */
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .recording-active {
+        animation: blink 1s infinite;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white font-sans"
+  >
+    <!-- Header -->
+    <nav class="bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
+      <div
+        class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <div class="text-2xl font-bold text-blue-500">Test Your Bot</div>
+        <div class="flex items-center space-x-4">
+          <a
+            href="{% url 'dashboard' %}"
+            class="text-slate-400 hover:text-white transition"
+            >← Back to Dashboard</a
+          >
+          <a
+            href="{% url 'logout' %}"
+            class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
+            >Logout</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex h-screen flex-col">
+      <!-- Chat Area -->
+      <div class="flex-1 overflow-y-auto px-4 py-6">
+        <div class="max-w-4xl mx-auto space-y-4" id="chatMessages">
+          <!-- Welcome Message -->
+          <div class="flex justify-start">
+            <div
+              class="bg-slate-700 rounded-2xl rounded-tl-sm px-6 py-4 max-w-md shadow-lg"
+            >
+              <p class="text-slate-200">
+                <strong>{{ bot_config.bot_name }}:</strong> {{
+                bot_config.welcome_message }}
+              </p>
+            </div>
+          </div>
+          <div class="text-xs text-slate-500 text-center">
+            Testing your bot configuration
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="bg-slate-800 border-t border-slate-700 px-4 py-6">
+        <div class="max-w-4xl mx-auto space-y-4">
+          <!-- Mode Tabs -->
+          <div class="flex space-x-2 mb-4">
+            <button
+              type="button"
+              onclick="switchMode('text')"
+              id="textModeBtn"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold transition"
+            >
+              <span>💬</span> <span>Text Test</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchMode('voice')"
+              id="voiceModeBtn"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 font-semibold transition"
+            >
+              <span>🎤</span> <span>Voice Test</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchMode('web-speech')"
+              id="webSpeechModeBtn"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 font-semibold transition"
+            >
+              <span>🎙️</span> <span>Web Speech API</span>
+            </button>
+          </div>
+
+          <!-- Text Input Mode -->
+          <div id="textMode" class="flex space-x-3">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Type a test message..."
+              class="flex-1 bg-slate-700 border border-slate-600 rounded-full px-6 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+            />
+            <button
+              type="button"
+              onclick="sendTextMessage()"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-full transition flex items-center space-x-2"
+            >
+              <span>Send</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <!-- Voice Recording Mode (Server-side) -->
+          <div
+            id="voiceMode"
+            class="hidden flex flex-col items-center space-y-4"
+          >
+            <div class="flex items-center justify-center space-x-4">
+              <button
+                type="button"
+                id="recordBtn"
+                onclick="startRecording()"
+                class="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-4 rounded-full transition flex items-center space-x-2 shadow-lg"
+              >
+                <span>🎤</span> <span>Start Recording</span>
+              </button>
+              <button
+                type="button"
+                id="stopBtn"
+                onclick="stopRecording()"
+                class="hidden bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-4 rounded-full transition flex items-center space-x-2 shadow-lg"
+              >
+                <span>⏹</span> <span>Stop Recording</span>
+              </button>
+            </div>
+            <div id="recordingStatus" class="text-slate-400 text-sm"></div>
+            <p class="text-xs text-slate-500 text-center">
+              Your voice will be converted to text automatically
+            </p>
+          </div>
+
+          <!-- Web Speech API Mode (Browser-based) -->
+          <div
+            id="webSpeechMode"
+            class="hidden flex flex-col items-center space-y-4"
+          >
+            <div class="input-group w-full">
+              <input
+                type="text"
+                id="webSpeechInput"
+                placeholder="Or type your message..."
+                class="flex-1 bg-slate-700 border border-slate-600 rounded-full px-6 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+              />
+              <button
+                class="voice-button"
+                id="voiceButton"
+                title="Click to speak"
+              >
+                🎤
+              </button>
+              <button
+                onclick="sendWebSpeechMessage()"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-full transition"
+              >
+                Send
+              </button>
+            </div>
+            <div class="status-text" id="statusText">
+              Click microphone to start speaking
+            </div>
+            <p class="text-xs text-slate-500 text-center">
+              Uses browser's speech recognition - no server upload required
+            </p>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div
+            id="loadingIndicator"
+            class="hidden flex items-center justify-center space-x-2"
+          >
+            <div
+              class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+              style="animation-delay: 0s"
+            ></div>
+            <div
+              class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+              style="animation-delay: 0.2s"
+            ></div>
+            <div
+              class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+              style="animation-delay: 0.4s"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      let isRecording = false;
+      
+      // Web Speech API variables
+      let isListening = false;
+      let recognition = null;
+
+      // Initialize Web Speech API
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = function() {
+          isListening = true;
+          const voiceBtn = document.getElementById('voiceButton');
+          if (voiceBtn) {
+            voiceBtn.classList.add('listening');
+          }
+          document.getElementById('statusText').textContent = 'Listening... Speak now';
+        };
+        
+        recognition.onend = function() {
+          isListening = false;
+          const voiceBtn = document.getElementById('voiceButton');
+          if (voiceBtn) {
+            voiceBtn.classList.remove('listening');
+          }
+          document.getElementById('statusText').textContent = 'Click microphone to start speaking';
+        };
+        
+        recognition.onresult = function(event) {
+          const transcript = event.results[0][0].transcript;
+          document.getElementById('webSpeechInput').value = transcript;
+          document.getElementById('statusText').textContent = `You said: "${transcript}"`;
+          sendWebSpeechMessage(transcript);
+        };
+        
+        recognition.onerror = function(event) {
+          console.error('Recognition error:', event.error);
+          document.getElementById('statusText').textContent = `Error: ${event.error}. Please try again.`;
+          isListening = false;
+          const voiceBtn = document.getElementById('voiceButton');
+          if (voiceBtn) {
+            voiceBtn.classList.remove('listening');
+          }
+        };
+      }
+
+      function toggleVoice() {
+        if (!recognition) {
+          document.getElementById('statusText').textContent = 'Speech recognition not supported in your browser';
+          alert('Speech recognition not supported in your browser. Please use the Voice Recording mode instead.');
+          return;
+        }
+        if (isListening) {
+          recognition.stop();
+        } else {
+          recognition.start();
+        }
+      }
+      function switchMode(mode) {
+        if (mode === "text") {
+          document.getElementById("textMode").classList.remove("hidden");
+          document.getElementById("voiceMode").classList.add("hidden");
+          document.getElementById("webSpeechMode").classList.add("hidden");
+          document.getElementById("textModeBtn").classList.remove("bg-slate-700");
+          document.getElementById("textModeBtn").classList.add("bg-blue-600");
+          document.getElementById("voiceModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("voiceModeBtn").classList.add("bg-slate-700");
+          document.getElementById("webSpeechModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("webSpeechModeBtn").classList.add("bg-slate-700");
+        } else if (mode === "voice") {
+          document.getElementById("textMode").classList.add("hidden");
+          document.getElementById("voiceMode").classList.remove("hidden");
+          document.getElementById("webSpeechMode").classList.add("hidden");
+          document.getElementById("voiceModeBtn").classList.remove("bg-slate-700");
+          document.getElementById("voiceModeBtn").classList.add("bg-blue-600");
+          document.getElementById("textModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("textModeBtn").classList.add("bg-slate-700");
+          document.getElementById("webSpeechModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("webSpeechModeBtn").classList.add("bg-slate-700");
+        } else if (mode === "web-speech") {
+          document.getElementById("textMode").classList.add("hidden");
+          document.getElementById("voiceMode").classList.add("hidden");
+          document.getElementById("webSpeechMode").classList.remove("hidden");
+          document.getElementById("webSpeechModeBtn").classList.remove("bg-slate-700");
+          document.getElementById("webSpeechModeBtn").classList.add("bg-blue-600");
+          document.getElementById("textModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("textModeBtn").classList.add("bg-slate-700");
+          document.getElementById("voiceModeBtn").classList.remove("bg-blue-600");
+          document.getElementById("voiceModeBtn").classList.add("bg-slate-700");
+        }
+      }
+      function addMessageToChat(content, isBot = false) {
+        const chatMessages = document.getElementById("chatMessages");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `flex ${isBot ? "justify-start" : "justify-end"} animate-fadeIn`;
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = `rounded-2xl px-6 py-4 max-w-md shadow-lg ${
+          isBot ? "bg-slate-700 text-slate-200" : "bg-blue-600 text-white"
+        }`;
+        contentDiv.innerHTML = `<strong>${isBot ? "Bot" : "You"}:</strong> ${escapeHtml(content)}`;
+
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function showLoading(show) {
+        const indicator = document.getElementById("loadingIndicator");
+        if (show) {
+          indicator.classList.remove("hidden");
+        } else {
+          indicator.classList.add("hidden");
+        }
+      }
+
+      // Text message sending
+      function sendTextMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        addMessageToChat(message);
+        input.value = "";
+        showLoading(true);
+
+        fetch('{% url "text_chat" %}', {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie('csrftoken')
+          },
+          body: JSON.stringify({ message }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            showLoading(false);
+            if (data.answer) {
+              addMessageToChat(data.answer, true);
+            } else if (data.error) {
+              addMessageToChat("Error: " + data.error, true);
+            }
+          })
+          .catch((err) => {
+            showLoading(false);
+            addMessageToChat("Connection error. Please try again.", true);
+            console.error(err);
+          });
+      }
+
+      // Voice recording (server-side)
+      async function startRecording() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = sendVoiceMessage;
+
+          mediaRecorder.start();
+          isRecording = true;
+
+          document.getElementById("recordBtn").classList.add("hidden");
+          document.getElementById("stopBtn").classList.remove("hidden");
+          document.getElementById("recordingStatus").innerHTML = '<span class="recording-active">🔴 Recording... Speak now</span>';
+        } catch (error) {
+          addMessageToChat(
+            "Microphone access denied. Please allow microphone access.",
+            true,
+          );
+          console.error("Microphone error:", error);
+        }
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && isRecording) {
+          mediaRecorder.stop();
+          isRecording = false;
+
+          document.getElementById("stopBtn").classList.add("hidden");
+          document.getElementById("recordBtn").classList.remove("hidden");
+          document.getElementById("recordingStatus").textContent = "⏳ Processing your voice...";
+          
+          // Stop all tracks
+          if (mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          }
+        }
+      }
+
+      function sendVoiceMessage() {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.wav");
+
+        showLoading(true);
+
+        fetch('{% url "voice_chat" %}', {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": getCookie('csrftoken')
+          }
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            showLoading(false);
+            document.getElementById("recordingStatus").textContent = "";
+
+            if (data.transcript) {
+              addMessageToChat(data.transcript);
+            }
+            if (data.answer) {
+              addMessageToChat(data.answer, true);
+            } else if (data.error) {
+              addMessageToChat("Error: " + data.error, true);
+            }
+          })
+          .catch((err) => {
+            showLoading(false);
+            document.getElementById("recordingStatus").textContent = "";
+            addMessageToChat("Connection error. Please try again.", true);
+            console.error(err);
+          });
+      }
+      async function sendWebSpeechMessage(message) {
+        const input = document.getElementById("webSpeechInput");
+        const messageText = message || input.value.trim();
+
+        if (!messageText) return;
+
+        // Add user message to chat
+        addMessageToChat(messageText);
+        input.value = "";
+        showLoading(true);
+
+        try {
+          const response = await fetch('/voice/process/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ text: messageText })
+          });
+          
+          const data = await response.json();
+          showLoading(false);
+          
+          if (data.success) {
+            addMessageToChat(data.bot_response, true);
+          } else {
+            addMessageToChat("Error: " + data.error, true);
+          }
+        } catch (error) {
+          showLoading(false);
+          addMessageToChat("Connection error. Please try again.", true);
+          console.error('Error:', error);
+        }
+      }
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // Event listeners
+      document.getElementById("messageInput")?.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          sendTextMessage();
+        }
+      });
+      
+      document.getElementById("webSpeechInput")?.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          sendWebSpeechMessage();
+        }
+      });
+      
+      document.getElementById("voiceButton")?.addEventListener("click", toggleVoice);
+
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>
